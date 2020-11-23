@@ -39,6 +39,7 @@ enum class ServerStatus {
 
 class RafterServer(port: Int, controller: Controller) : Server {
     private val server = RpcServer(port, false, false)
+    @Volatile
     private var status: ServerStatus = ServerStatus.SHUTDOWN
 
     init {

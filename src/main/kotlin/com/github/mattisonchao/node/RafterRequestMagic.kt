@@ -7,7 +7,7 @@ package com.github.mattisonchao.node
  * @since 1.1.1
  * @property code rpc request type code
  */
-enum class RafterRequestTypeEnum(val code: Int) {
+enum class RafterRequestMagic(val code: Int) {
     VOTE(0),
     APPEND_ENTRIES(1);
 
@@ -19,8 +19,8 @@ enum class RafterRequestTypeEnum(val code: Int) {
          * @return rafter request type or not
          * @throws IllegalArgumentException
          */
-        fun valueOf(code: Int): RafterRequestTypeEnum {
-            return RafterRequestTypeEnum.values().find { it.code == code }
+        fun valueOf(code: Int): RafterRequestMagic {
+            return RafterRequestMagic.values().find { it.code == code }
                     ?: throw IllegalArgumentException("Rafter request type can not parse code $code")
         }
     }

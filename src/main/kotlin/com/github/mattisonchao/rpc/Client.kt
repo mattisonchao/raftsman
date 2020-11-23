@@ -11,12 +11,6 @@ import org.slf4j.LoggerFactory
  * @since 1.1.1
  */
 interface Client {
-
-    /**
-     * Start client to prepare send message.
-     */
-    fun start()
-
     /**
      * Sync send request message to target server and get specific type response.
      *
@@ -27,6 +21,7 @@ interface Client {
      */
     fun <S> syncSend(request: Request<*>): Response<S>?
 
+    fun shutdown()
 }
 
 /**
@@ -36,25 +31,33 @@ interface Client {
  * @see Client
  * @since 1.1.1
  */
-class RafterClient : Client {
+class RafterClient private constructor() : Client {
+
     companion object {
+        private val INSTANCE = RafterClient()
         private val logger = LoggerFactory.getLogger(RafterClient::class.java)
+        fun getInstance() = INSTANCE
     }
 
     private val client = RpcClient()
 
-    override fun start() {
+    init {
         client.startup()
     }
+
 
     @Suppress("UNCHECKED_CAST")
     override fun <S> syncSend(request: Request<*>): Response<S>? {
         try {
-            return client.invokeSync(request.target, request, 0) as Response<S>
+            return client.invokeSync(request.target, request, 4000) as Response<S>
         } catch (e: RemotingException) {
             logger.info("rpc exception {}", e.message)
         }
         return null
+    }
+
+    override fun shutdown() {
+        client.shutdown()
     }
 
 }
