@@ -3,10 +3,9 @@ package com.github.mattisonchao.node
 import com.github.mattisonchao.dispathcher.ElectionTask
 import com.github.mattisonchao.dispathcher.RafterNodeDispatcher
 import com.github.mattisonchao.entity.*
-import com.github.mattisonchao.rpc.RafterClient
-import com.github.mattisonchao.rpc.RafterServer
-import com.github.mattisonchao.rpc.Request
-import com.github.mattisonchao.rpc.ServerStatus
+import com.github.mattisonchao.option.Options
+import com.github.mattisonchao.rpc.*
+import com.github.mattisonchao.storage.RocksdbLogEntries
 import com.github.mattisonchao.utils.CountDownClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -18,24 +17,31 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicInteger
 
-data class MetaData(@Volatile var role: NodeRole, @Volatile var voteFor: String, @Volatile var currentTerm: Long, @Volatile var commitIndex: Long, @Volatile var lastApplied: Long)
+data class MetaData(@Volatile var role: NodeRole, @Volatile var voteFor: String, @Volatile var currentTerm: Long, @Volatile var commitIndex: Long, @Volatile var lastApplied: Long, val nextIndex: MutableMap<EndPoint, Long> = mutableMapOf(), val matchIndex: MutableMap<EndPoint, Long> = mutableMapOf())
 
-class NodeImpl private constructor(private val self: EndPoint) : Node {
+class NodeImpl private constructor(private val self: EndPoint, private val option: Options = Options()) : Node {
 
     private val metadata = MetaData(NodeRole.FOLLOWER, "", 0L, 0, 0)
     private val server = RafterServer(self.port, RafterController(this))
     private val dispatcher = RafterNodeDispatcher()
+    private val parliamentMember = ParliamentMemberImpl(this)
+    private val logEntries = RocksdbLogEntries()
     private val electionClock = CountDownClock(name = "electionClock")
     private var heartBeatClock = CountDownClock(name = "heartBeatClock")
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(NodeImpl::class.java)
         fun create(host: String, port: Int): Node = NodeImpl(EndPoint(host, port))
+        fun create(host: String, port: Int, option: Options): Node = NodeImpl(EndPoint(host, port), option)
     }
 
     override fun getElectionClock(): CountDownClock = electionClock
+    override fun getCustomController(): CustomController? = option.nodeConfiguration.customController
+
     override fun getMetaData(): MetaData = metadata
     override fun getEndPoint(): EndPoint = self
+    override fun getLogEntries(): RocksdbLogEntries = logEntries
+
 
     override fun startup() {
         if (server.getStatus() == ServerStatus.RUNNABLE) {
@@ -122,5 +128,8 @@ class NodeImpl private constructor(private val self: EndPoint) : Node {
         metadata.voteFor = ""
         metadata.role = NodeRole.FOLLOWER
     }
+
+    override fun submit(proposal: Any): Boolean =
+            parliamentMember.submit(proposal)
 
 }

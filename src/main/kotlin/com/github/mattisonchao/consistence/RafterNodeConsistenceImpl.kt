@@ -42,5 +42,4 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
         node.getElectionClock().resetHeartBeatTimeOut()
         return AEResult(metaData.currentTerm, true)
     }
-
 }

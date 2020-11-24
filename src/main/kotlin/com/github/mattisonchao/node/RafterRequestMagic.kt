@@ -9,7 +9,8 @@ package com.github.mattisonchao.node
  */
 enum class RafterRequestMagic(val code: Int) {
     VOTE(0),
-    APPEND_ENTRIES(1);
+    APPEND_ENTRIES(1),
+    CLIENT_REQUEST(2);
 
     companion object {
         /**

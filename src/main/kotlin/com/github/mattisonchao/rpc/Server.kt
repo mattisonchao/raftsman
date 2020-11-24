@@ -44,7 +44,7 @@ class RafterServer(port: Int, controller: Controller) : Server {
 
     init {
         server.registerUserProcessor(object : AbstractUserProcessor<Request<*>>() {
-            override fun handleRequest(bizCtx: BizContext?, request: Request<*>?): Response<*>? = request?.let { controller.handleRequest(bizCtx, request) }
+            override fun handleRequest(bizCtx: BizContext?, request: Request<*>?): Response<*>? = request?.let { controller.handleRequest(request) }
 
             override fun interest(): String? = Request::class.qualifiedName
 

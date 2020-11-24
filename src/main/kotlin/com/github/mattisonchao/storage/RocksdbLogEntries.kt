@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @since 1.1.1
  * @see LogEntries
  */
-class RocksdbLogEntries private constructor() : LogEntries {
+class RocksdbLogEntries() : LogEntries {
 
     private val rocksDB: RocksDB = RocksDB.open(Options().setCreateIfMissing(true), "./rafter-logEntries")
 
@@ -26,9 +26,7 @@ class RocksdbLogEntries private constructor() : LogEntries {
         private val logger: Logger = LoggerFactory.getLogger(RocksdbLogEntries::class.java)
         private val lock = Mutex()
         private val LAST_KEY = "LAST_INDEX_KEY".toByteArray()
-        private val INSTANCE = RocksdbLogEntries()
         private val serializer = HessianSerializer()
-        fun getInstance() = INSTANCE
     }
 
 

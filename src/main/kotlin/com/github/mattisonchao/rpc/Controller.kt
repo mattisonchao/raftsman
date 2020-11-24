@@ -17,6 +17,6 @@ interface Controller {
      * @param request request entity
      * @return specific type response
      */
-    fun handleRequest(bizCtx: BizContext?, request: Request<*>): Response<*>?
+    fun handleRequest( request: Request<*>): Response<*>?
 
 }
