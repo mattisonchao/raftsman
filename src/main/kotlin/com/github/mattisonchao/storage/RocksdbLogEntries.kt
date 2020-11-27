@@ -2,6 +2,7 @@ package com.github.mattisonchao.storage
 
 import com.alipay.remoting.serialization.HessianSerializer
 import com.github.mattisonchao.entity.LogEntry
+import com.github.mattisonchao.option.StorageOptions
 import kotlinx.coroutines.sync.Mutex
 import org.rocksdb.Options
 import org.rocksdb.RocksDB
@@ -18,9 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * @since 1.1.1
  * @see LogEntries
  */
-class RocksdbLogEntries() : LogEntries {
+class RocksdbLogEntries(val options: StorageOptions) : LogEntries {
 
-    private val rocksDB: RocksDB = RocksDB.open(Options().setCreateIfMissing(true), "./rafter-logEntries")
+    private val rocksDB: RocksDB = RocksDB.open(Options().setCreateIfMissing(true), options.logEntriesPath)
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(RocksdbLogEntries::class.java)
@@ -45,7 +46,7 @@ class RocksdbLogEntries() : LogEntries {
     }
 
     override fun get(index: Long): LogEntry? {
-        val byteLogEntry = rocksDB[index.toString().toByteArray()]
+        val byteLogEntry = rocksDB[index.toString().toByteArray()] ?: return null
         return serializer.deserialize<LogEntry>(byteLogEntry, LogEntry::class.java.toString())
     }
 

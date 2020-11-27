@@ -24,7 +24,12 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
 
     override fun handleRequestVote(arguments: RVArguments): RVResults {
         logger.info(" Receive vote request from ${arguments.candidateId}")
+        if (metaData.voteFor != "" && metaData.voteFor != arguments.candidateId)
+            return RVResults(metaData.currentTerm, false)
         if (arguments.term < metaData.currentTerm)
+            return RVResults(metaData.currentTerm, false)
+        val (_, logEntry) = node.getLogEntries().getLastWithIndex()
+        if (logEntry != null && (logEntry.term > arguments.lastLogTerm || logEntry.index!! > arguments.lastLogIndex))
             return RVResults(metaData.currentTerm, false)
         metaData.role = NodeRole.FOLLOWER
         NodeManager.getInstance().leader = arguments.candidateId.toEndPoint
@@ -40,6 +45,27 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
         NodeManager.getInstance().leader = arguments.leaderId.toEndPoint
         node.toBeFollower(arguments.term)
         node.getElectionClock().resetHeartBeatTimeOut()
+        if (arguments.entries == null || arguments.entries.isEmpty())
+            return AEResult(metaData.currentTerm, true)
+        val logEntry = node.getLogEntries().get(arguments.preLogIndex) ?: return AEResult(metaData.currentTerm, false)
+        if (logEntry.term != arguments.preLogTerm)
+            return AEResult(metaData.currentTerm, false)
+        val currentLogEntry = node.getLogEntries().get(arguments.preLogIndex + 1)
+        if (currentLogEntry != null) {
+            if (currentLogEntry.term != arguments.entries[0].term) {
+                node.getLogEntries().removeFromToLast(arguments.preLogIndex + 1)
+            } else {
+                return AEResult(metaData.currentTerm, true)
+            }
+        }
+        arguments.entries.forEach {
+            node.getLogEntries().add(it)
+        }
+        if (arguments.leaderCommit > metaData.commitIndex) {
+            val commitIndex = arguments.leaderCommit.coerceAtMost(node.getLogEntries().getLastIndex())
+            metaData.commitIndex = commitIndex
+            metaData.lastApplied = commitIndex
+        }
         return AEResult(metaData.currentTerm, true)
     }
 }
