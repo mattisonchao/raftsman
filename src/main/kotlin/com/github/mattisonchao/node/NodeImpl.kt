@@ -144,6 +144,7 @@ class NodeImpl private constructor(private val self: EndPoint) : Node {
         metadata.currentTerm = term
         metadata.voteFor = ""
         metadata.role = NodeRole.FOLLOWER
+        electionClock.resetHeartBeatTimeOut()
     }
 
     override fun submit(proposal: Any): Boolean =
