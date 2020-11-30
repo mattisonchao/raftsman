@@ -3,6 +3,7 @@ package com.github.mattisonchao.node
 import com.github.mattisonchao.dispathcher.ElectionTask
 import com.github.mattisonchao.dispathcher.RafterNodeDispatcher
 import com.github.mattisonchao.entity.*
+import com.github.mattisonchao.option.NodeOptions
 import com.github.mattisonchao.option.StorageOptions
 import com.github.mattisonchao.rpc.*
 import com.github.mattisonchao.storage.LogEntries
@@ -23,6 +24,7 @@ data class MetaData(@Volatile var role: NodeRole, @Volatile var voteFor: String,
 class NodeImpl private constructor(private val self: EndPoint) : Node {
 
     private lateinit var storageOption: StorageOptions
+    private lateinit var nodeOptions: NodeOptions
 
     private val metadata = MetaData(NodeRole.FOLLOWER, "", 0L, 0, 0)
     private val server = RafterServer(self.port, RafterController(this))
@@ -41,9 +43,13 @@ class NodeImpl private constructor(private val self: EndPoint) : Node {
 
 
     override fun getElectionClock(): CountDownClock = electionClock
-    override fun getCustomController(): CustomController? {
-        return null
+    override fun getCustomController(): CustomController = nodeOptions.controller
+
+    override fun isLeader(): Boolean {
+        return NodeManager.getInstance().leader == self
     }
+
+    override fun getLeader(): EndPoint? = NodeManager.getInstance().leader
 
     override fun getMetaData(): MetaData = metadata
     override fun getEndPoint(): EndPoint = self
@@ -76,6 +82,10 @@ class NodeImpl private constructor(private val self: EndPoint) : Node {
         metadata.role = NodeRole.LEADER
         NodeManager.getInstance().leader = self
         metadata.voteFor = ""
+        NodeManager.getInstance().getAllPeers().forEach{
+            metadata.nextIndex[it] = entries.getLastIndex() + 1
+            metadata.matchIndex[it] = 0
+        }
         val lock = Mutex()
         heartBeatClock = CountDownClock(name = "heartBeatClock")
         heartBeatClock.start {
@@ -144,4 +154,8 @@ class NodeImpl private constructor(private val self: EndPoint) : Node {
         return this
     }
 
+    override fun withNodeOptions(nodeOptions: NodeOptions): Node {
+        this.nodeOptions = nodeOptions
+        return this
+    }
 }

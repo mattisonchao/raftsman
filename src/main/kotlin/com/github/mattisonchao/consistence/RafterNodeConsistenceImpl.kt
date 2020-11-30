@@ -3,7 +3,6 @@ package com.github.mattisonchao.consistence
 import com.github.mattisonchao.entity.*
 import com.github.mattisonchao.node.Node
 import com.github.mattisonchao.node.NodeManager
-import com.github.mattisonchao.node.NodeRole
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -23,7 +22,7 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
     }
 
     override fun handleRequestVote(arguments: RVArguments): RVResults {
-        logger.info(" Receive vote request from ${arguments.candidateId}")
+//        logger.info(" Receive vote request from ${arguments.candidateId}")
         if (metaData.voteFor != "" && metaData.voteFor != arguments.candidateId)
             return RVResults(metaData.currentTerm, false)
         if (arguments.term < metaData.currentTerm)
@@ -31,15 +30,14 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
         val (_, logEntry) = node.getLogEntries().getLastWithIndex()
         if (logEntry != null && (logEntry.term > arguments.lastLogTerm || logEntry.index!! > arguments.lastLogIndex))
             return RVResults(metaData.currentTerm, false)
-        metaData.role = NodeRole.FOLLOWER
+        node.toBeFollower(arguments.term)
         NodeManager.getInstance().leader = arguments.candidateId.toEndPoint
-        metaData.currentTerm = arguments.term
         metaData.voteFor = arguments.candidateId
         return RVResults(metaData.currentTerm, true)
     }
 
     override fun handleAppendEntries(arguments: AEArguments): AEResult {
-        logger.info(" Receive heart beat request from ${arguments.leaderId}")
+//        logger.info(" Receive heart beat request from ${arguments.leaderId}")
         if (arguments.term < metaData.currentTerm)
             return AEResult(metaData.currentTerm, false)
         NodeManager.getInstance().leader = arguments.leaderId.toEndPoint
@@ -47,9 +45,13 @@ class RafterNodeConsistenceImpl(private val node: Node) : Consistence {
         node.getElectionClock().resetHeartBeatTimeOut()
         if (arguments.entries == null || arguments.entries.isEmpty())
             return AEResult(metaData.currentTerm, true)
-        val logEntry = node.getLogEntries().get(arguments.preLogIndex) ?: return AEResult(metaData.currentTerm, false)
-        if (logEntry.term != arguments.preLogTerm)
-            return AEResult(metaData.currentTerm, false)
+        logger.info("receive message from {} , content is {}", arguments.leaderId, arguments.entries)
+        if (arguments.preLogIndex != 0L && node.getLogEntries().getLastIndex() != 0L ) {
+            val logEntry = node.getLogEntries().get(arguments.preLogIndex)
+                    ?: return AEResult(metaData.currentTerm, false)
+            if (logEntry.term != arguments.preLogTerm)
+                return AEResult(metaData.currentTerm, false)
+        }
         val currentLogEntry = node.getLogEntries().get(arguments.preLogIndex + 1)
         if (currentLogEntry != null) {
             if (currentLogEntry.term != arguments.entries[0].term) {

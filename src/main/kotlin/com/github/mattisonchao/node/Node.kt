@@ -15,6 +15,10 @@ interface Node : LifeCycle, RoleTransform, ParliamentMember, Options {
 
     fun getElectionClock(): CountDownClock
 
-    fun getCustomController(): CustomController?
+    fun getCustomController(): CustomController
+
+    fun isLeader(): Boolean
+
+    fun getLeader(): EndPoint?
 
 }

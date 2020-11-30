@@ -33,7 +33,7 @@
   allow_concurrent_memtable_write=true
   paranoid_checks=true
   WAL_size_limit_MB=0
-  wal_dir=./logEntries-8886
+  wal_dir=./logEntries-8888
   avoid_flush_during_shutdown=false
   keep_log_file_num=1000
   table_cache_numshardbits=6
