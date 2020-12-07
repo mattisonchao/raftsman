@@ -3,20 +3,20 @@ package com.github.raftsman
 import com.github.raftsman.lifeCycle.LifeCycle
 
 abstract class AbstractActor : Actor, LifeCycle {
-    val mailBox: MailBox = MailBox()
 
-    final override fun startup() {
-        mailBox.actor = this
-        mailBox.startup()
-    }
+    val mailBox: MailBox = MailBoxImp()
 
-    fun startup(port: Int) {
-        mailBox.actor = this
-        mailBox.port = port
-        mailBox.startup()
-    }
+    final override fun startup() =
+            mailBox
+                    .withActor(this)
+                    .startup()
 
-    final override fun shutdown() {
-        mailBox.shutdown()
-    }
+    fun startup(port: Int) =
+            mailBox
+                    .withActor(this)
+                    .withPort(port)
+                    .startup()
+
+    final override fun shutdown() =
+            mailBox.shutdown()
 }

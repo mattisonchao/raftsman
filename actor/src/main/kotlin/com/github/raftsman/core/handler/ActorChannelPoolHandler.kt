@@ -1,12 +1,12 @@
 package com.github.raftsman.core.handler
 
-import com.github.raftsman.MailBox
+import com.github.raftsman.MailBoxImp
 import com.github.raftsman.core.codec.MsgDecoder
 import com.github.raftsman.core.codec.MsgEncoder
 import io.netty.channel.Channel
 import io.netty.channel.pool.ChannelPoolHandler
 
-class ActorChannelPoolHandler(private val mailBox: MailBox) : ChannelPoolHandler {
+class ActorChannelPoolHandler(private val mailBoxImp: MailBoxImp) : ChannelPoolHandler {
     override fun channelReleased(ch: Channel?) {
     }
 
@@ -17,6 +17,6 @@ class ActorChannelPoolHandler(private val mailBox: MailBox) : ChannelPoolHandler
         ch.pipeline()
                 .addLast(MsgDecoder())
                 .addLast(MsgEncoder())
-                .addLast(ActorHandler(mailBox))
+                .addLast(ActorHandler(mailBoxImp))
     }
 }

@@ -18,7 +18,7 @@ fun main() {
     GlobalScope.launch {
         while (true) {
             server2.mailBox.send(Url("127.0.0.1", 7999), "come on!")
-            delay(1)
+            delay(100)
         }
     }
     server2.startup(7998)

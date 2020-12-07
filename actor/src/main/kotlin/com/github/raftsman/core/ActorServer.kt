@@ -1,6 +1,6 @@
 package com.github.raftsman.core
 
-import com.github.raftsman.MailBox
+import com.github.raftsman.MailBoxImp
 import com.github.raftsman.core.handler.ActorInitChannelHandler
 import com.github.raftsman.lifeCycle.LifeCycle
 import io.netty.bootstrap.ServerBootstrap
@@ -11,7 +11,7 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 
 
-class ActorServer(private val mailBox: MailBox) : LifeCycle {
+class ActorServer(private val mailBoxImp: MailBoxImp) : LifeCycle {
     private val bossGroup = NioEventLoopGroup(1)
     private val workerGroup = NioEventLoopGroup()
     override fun startup() {
@@ -23,8 +23,8 @@ class ActorServer(private val mailBox: MailBox) : LifeCycle {
                     .option(ChannelOption.SO_BACKLOG, 1024) // 连接超时
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childHandler(ActorInitChannelHandler(mailBox))
-            val channel = bootstrap.bind(mailBox.port).sync().channel()
+                    .childHandler(ActorInitChannelHandler(mailBoxImp))
+            val channel = bootstrap.bind(mailBoxImp.port).sync().channel()
             channel.closeFuture().sync()
         } finally {
             bossGroup.shutdownGracefully()

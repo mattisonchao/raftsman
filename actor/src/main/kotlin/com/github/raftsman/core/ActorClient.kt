@@ -1,6 +1,6 @@
 package com.github.raftsman.core
 
-import com.github.raftsman.MailBox
+import com.github.raftsman.MailBoxImp
 import com.github.raftsman.Url
 import com.github.raftsman.core.handler.ActorChannelPoolHandler
 import com.github.raftsman.core.handler.ActorInitChannelHandler
@@ -16,7 +16,7 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import java.net.InetSocketAddress
 
-class ActorClient(private val mailBox: MailBox) {
+class ActorClient(private val mailBoxImp: MailBoxImp) {
     private val group = NioEventLoopGroup(10)
     private val bootstrap: Bootstrap = Bootstrap()
     var channelPool: ChannelPoolMap<Url, SimpleChannelPool>
@@ -27,10 +27,10 @@ class ActorClient(private val mailBox: MailBox) {
                 .handler(LoggingHandler(LogLevel.TRACE))
                 .option(ChannelOption.SO_BACKLOG, 1024) // 连接超时
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)
-                .handler(ActorInitChannelHandler(mailBox))
+                .handler(ActorInitChannelHandler(mailBoxImp))
         channelPool = object : AbstractChannelPoolMap<Url, SimpleChannelPool>() {
             override fun newPool(key: Url): SimpleChannelPool {
-                val actorChannelPoolHandler = ActorChannelPoolHandler(mailBox)
+                val actorChannelPoolHandler = ActorChannelPoolHandler(mailBoxImp)
                 return FixedChannelPool(bootstrap.remoteAddress(InetSocketAddress.createUnresolved(key.host, key.port)), actorChannelPoolHandler, 4)
             }
         }

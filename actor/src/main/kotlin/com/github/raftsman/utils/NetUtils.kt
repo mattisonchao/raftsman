@@ -7,8 +7,9 @@ import java.util.*
 
 
 object NetUtils {
-    private val MAX_AVAILABLE_PORT = 65535
-    private val MIN_AVALIABLE_PORT = 2000
+
+    private const val MAX_AVAILABLE_PORT = 65535
+    private const val MIN_AVAILABLE_PORT = 2000
 
     private fun isLocalPortUsing(port: Int): Boolean = isPortUsing("127.0.0.1", port)
 
@@ -22,7 +23,7 @@ object NetUtils {
     }
 
     fun getAvailablePort(): Int {
-        val port: Int = Random().nextInt(MAX_AVAILABLE_PORT) % (MAX_AVAILABLE_PORT - MIN_AVALIABLE_PORT + 1) + MIN_AVALIABLE_PORT
+        val port: Int = Random().nextInt(MAX_AVAILABLE_PORT) % (MAX_AVAILABLE_PORT - MIN_AVAILABLE_PORT + 1) + MIN_AVAILABLE_PORT
         val using = isLocalPortUsing(port)
         return if (using) {
             getAvailablePort()
